@@ -1,0 +1,19 @@
+{
+  "nav": {
+    "howItWorks": "How it works",
+    "pricing": "Pricing",
+    "law": "The law",
+    "security": "Security",
+    "login": "Log in",
+    "signup": "Start free trial"
+  },
+  "hero": {
+    "eyebrow": "For Ontario employers with 25+ employees",
+    "title": "Ontario's new hiring rules went live January 1.",
+    "titleAccent": "Stay compliant in 10 minutes a week.",
+    "subtitle": "ClearPost tracks pay-transparency disclosures, AI screening notices, and the 45-day candidate notification deadline — so a complaint to the Ministry of Labour doesn't become a $100,000 problem.",
+    "ctaPrimary": "Start 14-day free trial",
+    "ctaSecondary": "Take the 60-second compliance check",
+    "trustNoCard": "No credit card. Data hosted in Canada."
+  }
+}

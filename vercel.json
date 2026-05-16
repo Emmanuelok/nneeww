@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["yul1"],
+  "installCommand": "npm install --legacy-peer-deps"
+}
