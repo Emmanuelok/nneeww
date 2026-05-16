@@ -1,12 +1,100 @@
 import Link from "next/link";
 import { Leaf, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { isDemoMode } from "@/lib/mode";
+import { db } from "@/lib/db";
+import { candidateNotifications, candidates, organizations, jobPostings } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { confirmNotificationViewedAction } from "@/lib/notifications/actions";
 
-// The candidate-facing notification landing page. Visited by candidates via a
-// signed link in the decision email. In v1 we render a static (un-tokenized)
-// preview that demonstrates the experience; in v1.1 the token resolves to a
-// candidate_notifications row and triggers a delivery_proof_url write-back.
+// The candidate-facing notification landing page. Visited by candidates via
+// the signed link in the decision email. The view triggers a confirmation
+// action that logs an audit_log "notification.viewed" entry — that timestamp
+// is part of the delivery proof shown to an ESA officer.
 export const metadata = { title: "Hiring decision update" };
+
+type ViewModel = {
+  candidate: string;
+  company: string;
+  role: string;
+  interviewDate: string;
+  decision: string;
+  senderName: string;
+  senderTitle: string;
+  sentAt: string | null;
+};
+
+const DECISION_PHRASE: Record<string, string> = {
+  made: "we have made an offer to another candidate for this role",
+  no_hire: "we have decided to move forward with another candidate",
+  not_made: "we have not yet finalized our hiring decision for this role",
+};
+
+async function loadNotification(token: string): Promise<ViewModel> {
+  if (isDemoMode()) {
+    return {
+      candidate: "Jadesola Okafor",
+      company: "Acme Manufacturing Ltd.",
+      role: "Sales Manager — GTA",
+      interviewDate: "April 9, 2026",
+      decision: DECISION_PHRASE.no_hire,
+      senderName: "Sara Chen",
+      senderTitle: "Head of People",
+      sentAt: null,
+    };
+  }
+
+  // Live: look up by token, log the view, return the candidate-facing data.
+  await confirmNotificationViewedAction(token);
+
+  const [row] = await db
+    .select({
+      n: candidateNotifications,
+      c: candidates,
+      o: organizations,
+      p: jobPostings,
+    })
+    .from(candidateNotifications)
+    .innerJoin(candidates, eq(candidates.id, candidateNotifications.candidateId))
+    .innerJoin(organizations, eq(organizations.id, candidateNotifications.orgId))
+    .innerJoin(jobPostings, eq(jobPostings.id, candidateNotifications.postingId))
+    .where(eq(candidateNotifications.token, token))
+    .limit(1);
+
+  if (!row) {
+    return {
+      candidate: "there",
+      company: "this employer",
+      role: "your role",
+      interviewDate: "your interview date",
+      decision: "we are still finalizing our hiring decision",
+      senderName: "People Team",
+      senderTitle: "Recruiting",
+      sentAt: null,
+    };
+  }
+
+  return {
+    candidate: row.c.name,
+    company: row.o.name,
+    role: row.p.title,
+    interviewDate: row.n.lastInterviewDate.toLocaleDateString("en-CA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    decision: row.n.decision ? DECISION_PHRASE[row.n.decision] : DECISION_PHRASE.not_made,
+    senderName: "People Team",
+    senderTitle: "Recruiting",
+    sentAt: row.n.notificationSentAt
+      ? row.n.notificationSentAt.toLocaleDateString("en-CA", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : null,
+  };
+}
 
 export default async function CandidateNotificationPage({
   params,
@@ -14,17 +102,7 @@ export default async function CandidateNotificationPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  // Deterministic sample candidate / posting derived from the token so the
-  // preview at /n/anything renders cleanly.
-  const sample = {
-    candidate: "Jadesola Okafor",
-    company: "Acme Manufacturing Ltd.",
-    role: "Sales Manager — GTA",
-    interviewDate: "April 9, 2026",
-    decision: "we have decided to move forward with another candidate",
-    senderName: "Sara Chen",
-    senderTitle: "Head of People",
-  };
+  const sample = await loadNotification(token);
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -45,6 +123,7 @@ export default async function CandidateNotificationPage({
           <CardHeader className="border-b border-border/60">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5" /> Delivery confirmed
+              {sample.sentAt && <span className="text-emerald-600/80"> · sent {sample.sentAt}</span>}
             </div>
             <CardTitle className="mt-3 text-2xl">Hiring decision update</CardTitle>
             <CardDescription>From {sample.company}</CardDescription>
