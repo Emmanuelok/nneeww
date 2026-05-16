@@ -1,110 +1,142 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { AppShell } from "@/components/app/app-shell";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlarmClock, Archive, ClipboardList, FileBadge, Leaf } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlarmClock,
+  Archive,
+  ClipboardList,
+  FileBadge,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
+import { dashboardStats, demoCandidates, demoPostings } from "@/lib/demo/data";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Dashboard" };
 
 export default function AppHomePage() {
+  const stats = dashboardStats();
+
+  const urgent = demoCandidates
+    .filter((c) => c.notificationStatus !== "sent")
+    .sort((a, b) => a.daysToDeadline - b.daysToDeadline)
+    .slice(0, 5);
+
+  const flaggedPostings = demoPostings.filter((p) => p.failedChecks > 0 && p.status === "live");
+
   return (
-    <div className="min-h-screen bg-secondary/20">
-      <header className="border-b border-border/60 bg-background">
-        <div className="container flex h-14 items-center justify-between">
-          <Link href="/app" className="flex items-center gap-2 text-sm font-semibold">
-            <span className="grid h-6 w-6 place-items-center rounded-md bg-primary text-primary-foreground">
-              <Leaf className="h-3.5 w-3.5" />
-            </span>
-            ClearPost
+    <AppShell
+      active="/app"
+      pageTitle="Compliance dashboard"
+      pageDescription="Ontario (Employment Standards Act) is active. You're on a 14-day trial."
+      actions={
+        <Button asChild>
+          <Link href="/app/postings/new">
+            <Plus className="h-4 w-4" /> New posting check
           </Link>
-          <nav className="flex items-center gap-5 text-sm text-muted-foreground">
-            <Link href="/app" className="text-foreground">Dashboard</Link>
-            <Link href="/app/postings" className="hover:text-foreground">Postings</Link>
-            <Link href="/app/notifications" className="hover:text-foreground">45-day inbox</Link>
-            <Link href="/app/vault" className="hover:text-foreground">Vault</Link>
-            <Link href="/app/settings" className="hover:text-foreground">Settings</Link>
-          </nav>
-        </div>
-      </header>
+        </Button>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-4">
+        <KPI title="Compliance score" value={`${stats.avgScore}%`} hint={`${stats.failingPostings} posting${stats.failingPostings === 1 ? "" : "s"} need review`} tone={stats.avgScore >= 80 ? "success" : "warning"} />
+        <KPI title="45-day deadlines" value={String(stats.overdue + stats.upcomingWeek)} hint={`${stats.overdue} overdue · ${stats.upcomingWeek} this week`} tone={stats.overdue > 0 ? "danger" : "warning"} />
+        <KPI title="Postings live" value={String(stats.live)} hint="Across Ontario" tone="muted" />
+        <KPI title="Vault items" value={String(stats.vaultCount)} hint="Auto-archive enabled" tone="muted" />
+      </div>
 
-      <main className="container py-10">
-        <div className="flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Compliance dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              You're on a 14-day trial. Ontario rules engine active.
-            </p>
-          </div>
-          <Badge variant="success">Trial active</Badge>
-        </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
-          <KPI title="Compliance score" value="84%" hint="3 postings need review" tone="success" />
-          <KPI title="Deadlines this week" value="7" hint="2 overdue" tone="warning" />
-          <KPI title="Postings live" value="12" hint="2 missing pay range" tone="muted" />
-          <KPI title="Vault items" value="38" hint="oldest expires 2028" tone="muted" />
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Welcome to ClearPost</CardTitle>
-              <CardDescription>
-                Three things to do today to get fully set up.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Todo
-                icon={ClipboardList}
-                title="Import your active postings"
-                body="Paste a URL or upload a CSV. We'll run each through the Ontario compliance checker."
-                href="/app/postings/new"
-                cta="Add a posting"
-              />
-              <Todo
-                icon={AlarmClock}
-                title="Log your recent interviews"
-                body="Every candidate gets a 45-day countdown so you'll never miss a notification deadline."
-                href="/app/candidates"
-                cta="Log interviews"
-              />
-              <Todo
-                icon={FileBadge}
-                title="Invite a teammate"
-                body="Bring your HR coordinator or recruiter into the workspace."
-                href="/app/settings"
-                cta="Invite teammate"
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Retention vault</CardTitle>
-              <CardDescription>3-year archive, auto-managed.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 rounded-md border border-border bg-secondary/30 p-3">
-                <Archive className="h-5 w-5 text-muted-foreground" />
-                <div className="text-sm">
-                  <div className="font-medium">Nothing archived yet</div>
-                  <div className="text-xs text-muted-foreground">
-                    Items move here automatically when a posting is taken down.
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div>
+              <CardTitle>45-day inbox</CardTitle>
+              <CardDescription>Candidates approaching or past their notification deadline.</CardDescription>
+            </div>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/app/notifications">Open inbox</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ul className="divide-y divide-border/60">
+              {urgent.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-4 px-6 py-3.5">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{c.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {c.postingTitle} · final interview {c.lastInterviewDate.toLocaleDateString("en-CA")}
+                    </div>
                   </div>
-                </div>
-              </div>
-              <Button asChild variant="outline" className="mt-4 w-full">
-                <Link href="/app/vault">Open vault</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                  <DeadlinePill days={c.daysToDeadline} status={c.notificationStatus} />
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
 
-        <p className="mt-12 text-center text-xs text-muted-foreground">
-          ClearPost is a compliance operations tool. Not legal advice. Confirm with HR counsel.
-        </p>
-      </main>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600" /> Postings flagged
+            </CardTitle>
+            <CardDescription>Live postings with failing compliance checks.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {flaggedPostings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No flagged postings. Nice.</p>
+            ) : (
+              flaggedPostings.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/app/postings/${p.id}`}
+                  className="block rounded-lg border border-border p-3 transition-colors hover:border-foreground/30 hover:bg-secondary/40"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-sm">{p.title}</div>
+                      <div className="truncate text-xs text-muted-foreground">{p.location}</div>
+                    </div>
+                    <Badge variant={p.failedChecks >= 2 ? "danger" : "warning"} className="shrink-0">
+                      {p.failedChecks} failing
+                    </Badge>
+                  </div>
+                </Link>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Todo
+          icon={ClipboardList}
+          title="Run a posting through the checker"
+          body="Paste a URL or text and we'll return a per-clause compliance report in 5 seconds."
+          href="/app/postings/new"
+          cta="Check a posting"
+        />
+        <Todo
+          icon={AlarmClock}
+          title="Log your recent interviews"
+          body="Every interview starts a 45-day countdown so you'll never miss a notification deadline."
+          href="/app/candidates"
+          cta="Log interviews"
+        />
+        <Todo
+          icon={FileBadge}
+          title="Generate a compliance report"
+          body="Audit-ready PDF + ZIP — the document you hand to an ESA officer if asked."
+          href="/app/compliance"
+          cta="Open compliance"
+        />
+      </div>
+    </AppShell>
   );
 }
 
@@ -117,7 +149,7 @@ function KPI({
   title: string;
   value: string;
   hint: string;
-  tone: "success" | "warning" | "muted";
+  tone: "success" | "warning" | "danger" | "muted";
 }) {
   return (
     <Card>
@@ -125,14 +157,13 @@ function KPI({
         <div className="text-xs font-medium text-muted-foreground">{title}</div>
         <div className="mt-1 text-3xl font-semibold tracking-tight">{value}</div>
         <div
-          className={
-            "mt-1 text-xs " +
-            (tone === "success"
-              ? "text-emerald-700"
-              : tone === "warning"
-              ? "text-amber-700"
-              : "text-muted-foreground")
-          }
+          className={cn(
+            "mt-1 text-xs",
+            tone === "success" && "text-emerald-700",
+            tone === "warning" && "text-amber-700",
+            tone === "danger" && "text-red-700",
+            tone === "muted" && "text-muted-foreground"
+          )}
         >
           {hint}
         </div>
@@ -155,17 +186,51 @@ function Todo({
   cta: string;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-lg border border-border p-4">
-      <div className="grid h-9 w-9 place-items-center rounded-md bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="mt-0.5 text-sm text-muted-foreground">{body}</div>
-      </div>
-      <Button asChild size="sm" variant="outline">
-        <Link href={href}>{cta}</Link>
-      </Button>
-    </div>
+    <Card>
+      <CardContent className="flex h-full flex-col gap-3 pt-6">
+        <div className="grid h-9 w-9 place-items-center rounded-md bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="flex-1">
+          <div className="text-sm font-medium">{title}</div>
+          <div className="mt-1 text-sm text-muted-foreground">{body}</div>
+        </div>
+        <Button asChild size="sm" variant="outline" className="self-start">
+          <Link href={href}>{cta}</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeadlinePill({ days, status }: { days: number; status: "pending" | "sent" | "overdue" }) {
+  if (status === "sent") {
+    return <Badge variant="success" className="shrink-0">Notified</Badge>;
+  }
+  if (days < 0) {
+    return (
+      <Badge variant="danger" className="shrink-0">
+        {Math.abs(days)}d overdue
+      </Badge>
+    );
+  }
+  if (days <= 5) {
+    return (
+      <Badge variant="danger" className="shrink-0">
+        {days}d left
+      </Badge>
+    );
+  }
+  if (days <= 15) {
+    return (
+      <Badge variant="warning" className="shrink-0">
+        {days}d left
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="muted" className="shrink-0">
+      {days}d left
+    </Badge>
   );
 }
