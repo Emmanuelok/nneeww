@@ -10,11 +10,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Upload, Plus } from "lucide-react";
-import { demoCandidates } from "@/lib/demo/data";
+import { getActiveOrg } from "@/lib/auth/context";
+import { listCandidates } from "@/lib/repositories/candidates";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Candidates" };
 
-export default function CandidatesPage() {
+export default async function CandidatesPage() {
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
+  const candidates = await listCandidates(org.id);
   return (
     <AppShell
       active="/app/candidates"
@@ -33,7 +38,7 @@ export default function CandidatesPage() {
     >
       <Card>
         <CardHeader>
-          <CardTitle>All candidates ({demoCandidates.length})</CardTitle>
+          <CardTitle>All candidates ({candidates.length})</CardTitle>
           <CardDescription>
             Pull these from your ATS via the CSV template (v1). Direct integrations on the roadmap.
           </CardDescription>
@@ -50,7 +55,7 @@ export default function CandidatesPage() {
               </tr>
             </thead>
             <tbody>
-              {demoCandidates
+              {candidates
                 .slice()
                 .sort((a, b) => a.daysToDeadline - b.daysToDeadline)
                 .map((c) => (

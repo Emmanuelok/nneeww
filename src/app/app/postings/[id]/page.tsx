@@ -20,12 +20,17 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getDemoPosting, getCandidatesForPosting } from "@/lib/demo/data";
+import { getActiveOrg } from "@/lib/auth/context";
+import { getPosting } from "@/lib/repositories/postings";
+import { listCandidatesForPosting } from "@/lib/repositories/candidates";
 import { runComplianceChecks, type CheckResult } from "@/lib/compliance/checker";
+import { redirect } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const p = getDemoPosting(id);
+  const org = await getActiveOrg();
+  if (!org) return { title: "Posting" };
+  const p = await getPosting(id, org.id);
   return { title: p?.title ?? "Posting" };
 }
 
@@ -35,7 +40,9 @@ export default async function PostingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const posting = getDemoPosting(id);
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
+  const posting = await getPosting(id, org.id);
   if (!posting) notFound();
 
   const report = runComplianceChecks({
@@ -49,13 +56,19 @@ export default async function PostingDetailPage({
     compensationCurrency: posting.compensationCurrency,
   });
 
-  const candidates = getCandidatesForPosting(posting.id);
+  const candidates = await listCandidatesForPosting(org.id, posting.id);
 
   return (
     <AppShell
       active="/app/postings"
       pageTitle={posting.title}
-      pageDescription={`${posting.department} · ${posting.location} · posted ${posting.postedAt.toLocaleDateString("en-CA")}`}
+      pageDescription={[
+        posting.department,
+        posting.location,
+        posting.postedAt ? `posted ${posting.postedAt.toLocaleDateString("en-CA")}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
       actions={
         <Button asChild variant="outline">
           <Link href="/app/postings">
@@ -130,10 +143,10 @@ export default async function PostingDetailPage({
                   ? `$${posting.compensationMin.toLocaleString("en-CA")} – $${posting.compensationMax.toLocaleString("en-CA")} ${posting.compensationCurrency}`
                   : "Not disclosed"}
               </Row>
-              <Row label="Posted">{posting.postedAt.toLocaleDateString("en-CA")}</Row>
+              <Row label="Posted">{posting.postedAt?.toLocaleDateString("en-CA") ?? "—"}</Row>
               <Separator />
               <a
-                href={posting.postingUrl}
+                href={posting.postingUrl ?? "#"}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"

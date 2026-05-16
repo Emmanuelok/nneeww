@@ -9,14 +9,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { demoPostings } from "@/lib/demo/data";
 import { Plus, ExternalLink } from "lucide-react";
+import { getActiveOrg } from "@/lib/auth/context";
+import { listPostings } from "@/lib/repositories/postings";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Postings" };
 
-export default function PostingsPage() {
-  const live = demoPostings.filter((p) => p.status === "live");
-  const archived = demoPostings.filter((p) => p.status !== "live");
+export default async function PostingsPage() {
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
+  const postings = await listPostings(org.id);
+  const live = postings.filter((p) => p.status === "live");
+  const archived = postings.filter((p) => p.status !== "live");
 
   return (
     <AppShell
@@ -68,7 +73,7 @@ export default function PostingsPage() {
                     <ScoreBadge score={p.complianceScore} failedChecks={p.failedChecks} />
                   </td>
                   <td className="px-4 py-4 text-right text-muted-foreground">
-                    {p.postedAt.toLocaleDateString("en-CA")}
+                    {p.postedAt?.toLocaleDateString("en-CA") ?? "—"}
                   </td>
                 </tr>
               ))}
@@ -96,7 +101,7 @@ export default function PostingsPage() {
                     </div>
                   </div>
                   <a
-                    href={p.postingUrl}
+                    href={p.postingUrl ?? "#"}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"

@@ -11,26 +11,36 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AlarmClock,
-  Archive,
   ClipboardList,
   FileBadge,
   AlertTriangle,
   Plus,
 } from "lucide-react";
-import { dashboardStats, demoCandidates, demoPostings } from "@/lib/demo/data";
 import { cn } from "@/lib/utils";
+import { getActiveOrg } from "@/lib/auth/context";
+import { listCandidates } from "@/lib/repositories/candidates";
+import { listPostings } from "@/lib/repositories/postings";
+import { getDashboardStats } from "@/lib/repositories/stats";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Dashboard" };
 
-export default function AppHomePage() {
-  const stats = dashboardStats();
+export default async function AppHomePage() {
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
 
-  const urgent = demoCandidates
+  const [stats, candidates, postings] = await Promise.all([
+    getDashboardStats(org.id),
+    listCandidates(org.id),
+    listPostings(org.id),
+  ]);
+
+  const urgent = candidates
     .filter((c) => c.notificationStatus !== "sent")
     .sort((a, b) => a.daysToDeadline - b.daysToDeadline)
     .slice(0, 5);
 
-  const flaggedPostings = demoPostings.filter((p) => p.failedChecks > 0 && p.status === "live");
+  const flaggedPostings = postings.filter((p) => p.failedChecks > 0 && p.status === "live");
 
   return (
     <AppShell

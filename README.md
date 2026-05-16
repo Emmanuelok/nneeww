@@ -18,17 +18,43 @@ notification deadline, and 3-year record retention.
 
 ```bash
 cp .env.example .env.local   # fill in Supabase + Stripe + Resend
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 
 Then open <http://localhost:3000>.
 
-Database (once `DATABASE_URL` is set):
+### Demo mode vs live mode
+
+The `/app/*` workspace runs in **demo mode** by default — it reads the
+seeded dataset in `src/lib/demo/data.ts` so the deployed preview shows a
+complete product without any infrastructure configured.
+
+Demo mode auto-activates when **either** of these is missing:
+
+- `DATABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+
+To switch to **live mode**:
+
+1. Provision a Supabase project in the `ca-central-1` region.
+2. Apply the schema and RLS policies:
+   ```bash
+   psql "$DATABASE_URL" -f drizzle/0000_init.sql
+   psql "$DATABASE_URL" -f drizzle/0001_rls.sql
+   ```
+3. (Optional) Seed the demo dataset into the live DB:
+   ```bash
+   npm run db:seed
+   ```
+4. Set `CLEARPOST_DEMO_MODE=false` in Vercel + restart.
+
+Drizzle's iterative workflow is available via:
 
 ```bash
-npm run db:generate
-npm run db:push
+npm run db:generate   # diff schema → drizzle/*.sql
+npm run db:push       # apply to DATABASE_URL
+npm run db:studio     # web UI for the data
 ```
 
 ## Deploying to Vercel

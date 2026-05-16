@@ -10,6 +10,19 @@ import {
   Leaf,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DemoBanner } from "@/components/app/demo-banner";
+import { getActiveOrg } from "@/lib/auth/context";
+import { isDemoMode } from "@/lib/mode";
+import { listCandidates } from "@/lib/repositories/candidates";
+
+const PROVINCE_LABELS: Record<string, string> = {
+  ON: "Ontario",
+  BC: "British Columbia",
+  AB: "Alberta",
+  QC: "Quebec",
+  FED: "Federally regulated",
+  OTHER: "Multi-jurisdiction",
+};
 
 const NAV = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -21,7 +34,7 @@ const NAV = [
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
-export function AppShell({
+export async function AppShell({
   active,
   pageTitle,
   pageDescription,
@@ -34,6 +47,22 @@ export function AppShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const org = await getActiveOrg();
+  const demo = isDemoMode();
+  const orgName = org?.name ?? "Your organization";
+  const provinceLabel = org ? PROVINCE_LABELS[org.province] ?? org.province : "Ontario";
+  const sizeLabel = org?.employeeCountBucket ?? "—";
+
+  // Count outstanding 45-day items for the sidebar pill (cheap in demo mode,
+  // a single Drizzle query in live mode — both ≤ 10ms).
+  let outstanding = 0;
+  if (org) {
+    const candidates = await listCandidates(org.id);
+    outstanding = candidates.filter(
+      (c) => c.notificationStatus !== "sent" && c.daysToDeadline <= 7
+    ).length;
+  }
+
   return (
     <div className="min-h-screen bg-secondary/20">
       <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-border/60 bg-background lg:flex lg:flex-col">
@@ -60,9 +89,9 @@ export function AppShell({
               >
                 <Icon className="h-4 w-4" />
                 <span className="flex-1">{item.label}</span>
-                {item.accent && !isActive && (
+                {item.accent && !isActive && outstanding > 0 && (
                   <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive/10 px-1.5 text-[10px] font-medium text-destructive">
-                    3
+                    {outstanding}
                   </span>
                 )}
               </Link>
@@ -71,10 +100,12 @@ export function AppShell({
         </nav>
         <div className="border-t border-border/60 p-4 text-xs text-muted-foreground">
           <div className="flex items-center justify-between">
-            <span>Acme Manufacturing</span>
-            <Badge variant="success" className="text-[10px]">Trial</Badge>
+            <span className="truncate font-medium text-foreground">{orgName}</span>
+            <Badge variant={demo ? "muted" : "success"} className="text-[10px]">
+              {demo ? "Demo" : "Trial"}
+            </Badge>
           </div>
-          <p className="mt-1">Ontario · 100–249 employees</p>
+          <p className="mt-1">{provinceLabel} · {sizeLabel} employees</p>
         </div>
       </aside>
 
@@ -103,6 +134,7 @@ export function AppShell({
 
       <main className="lg:pl-60">
         <div className="container max-w-6xl py-8">
+          {demo && <DemoBanner orgName={orgName} />}
           <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{pageTitle}</h1>

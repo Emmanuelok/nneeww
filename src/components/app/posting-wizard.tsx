@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { savePostingAction } from "@/lib/postings/actions";
 import {
   Card,
   CardContent,
@@ -43,11 +44,26 @@ export function PostingWizard() {
   const [title, setTitle] = useState("");
   const [rawText, setRawText] = useState("");
   const [postingUrl, setPostingUrl] = useState("");
-  const [vacancyStatus, setVacancyStatus] = useState<PostingInput["vacancyStatus"]>("not_disclosed");
+  const [vacancyStatus, setVacancyStatus] = useState<"existing_vacancy" | "pipeline" | "not_disclosed">("not_disclosed");
   const [aiUsed, setAiUsed] = useState(true);
   const [compensationMin, setCompensationMin] = useState<string>("");
   const [compensationMax, setCompensationMax] = useState<string>("");
   const [hasChecked, setHasChecked] = useState(false);
+  const [isSaving, startSaving] = useTransition();
+
+  function save() {
+    startSaving(async () => {
+      await savePostingAction({
+        title: title.trim() || "Untitled posting",
+        postingUrl: postingUrl || undefined,
+        rawText,
+        vacancyStatus,
+        aiUsed,
+        compensationMin: compensationMin ? parseInt(compensationMin, 10) : null,
+        compensationMax: compensationMax ? parseInt(compensationMax, 10) : null,
+      });
+    });
+  }
 
   const report: ComplianceReport | null = useMemo(() => {
     if (!hasChecked || !rawText.trim()) return null;
@@ -148,7 +164,7 @@ export function PostingWizard() {
                     name="vacancyStatus"
                     value={opt.v}
                     checked={vacancyStatus === opt.v}
-                    onChange={() => setVacancyStatus(opt.v as PostingInput["vacancyStatus"])}
+                    onChange={() => setVacancyStatus(opt.v as "existing_vacancy" | "pipeline" | "not_disclosed")}
                     className="sr-only"
                   />
                 </label>
@@ -228,7 +244,7 @@ export function PostingWizard() {
       </Card>
 
       <div className="lg:col-span-2">
-        <ResultsPanel report={report} hasChecked={hasChecked} />
+        <ResultsPanel report={report} hasChecked={hasChecked} onSave={save} isSaving={isSaving} />
       </div>
     </div>
   );
@@ -237,9 +253,13 @@ export function PostingWizard() {
 function ResultsPanel({
   report,
   hasChecked,
+  onSave,
+  isSaving,
 }: {
   report: ComplianceReport | null;
   hasChecked: boolean;
+  onSave: () => void;
+  isSaving: boolean;
 }) {
   if (!hasChecked || !report) {
     return (
@@ -319,13 +339,11 @@ function ResultsPanel({
         <Separator />
 
         <div className="flex flex-col gap-2">
-          <Button asChild>
-            <Link href="/signup">
-              Save this posting <ArrowRight className="h-4 w-4" />
-            </Link>
+          <Button onClick={onSave} disabled={isSaving}>
+            {isSaving ? "Saving…" : "Save this posting"} <ArrowRight className="h-4 w-4" />
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Saving requires a ClearPost account — free for 14 days.
+            Saved postings appear in your retention vault and stay searchable for 3 years.
           </p>
         </div>
       </CardContent>

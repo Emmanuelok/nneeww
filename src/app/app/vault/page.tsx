@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Archive, FileText, Mail, ClipboardList } from "lucide-react";
-import { demoVaultItems } from "@/lib/demo/data";
+import { getActiveOrg } from "@/lib/auth/context";
+import { listVaultItems } from "@/lib/repositories/vault";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Retention vault" };
 
@@ -18,7 +20,10 @@ const ICON = {
   notification: Mail,
 } as const;
 
-export default function VaultPage() {
+export default async function VaultPage() {
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
+  const vaultItems = await listVaultItems(org.id);
   return (
     <AppShell
       active="/app/vault"
@@ -26,11 +31,11 @@ export default function VaultPage() {
       pageDescription="3-year archive of postings, application forms, and notification proofs. Items auto-prune on expiry unless held by an admin."
     >
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Total items" value={String(demoVaultItems.length)} />
+        <Stat label="Total items" value={String(vaultItems.length)} />
         <Stat
           label="Oldest expiry"
           value={
-            demoVaultItems
+            vaultItems
               .map((v) => v.expiresAt)
               .sort((a, b) => a.getTime() - b.getTime())[0]
               ?.toLocaleDateString("en-CA") ?? "—"
@@ -48,7 +53,7 @@ export default function VaultPage() {
         </CardHeader>
         <CardContent className="p-0">
           <ul className="divide-y divide-border/60">
-            {demoVaultItems.map((item) => {
+            {vaultItems.map((item) => {
               const Icon = ICON[item.type];
               const daysToExpiry = Math.ceil(
                 (item.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)

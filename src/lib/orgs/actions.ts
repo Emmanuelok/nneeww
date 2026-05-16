@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { organizations, memberships, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { isDemoMode } from "@/lib/mode";
 
 function slugify(input: string) {
   return input
@@ -15,6 +16,10 @@ function slugify(input: string) {
 }
 
 export async function createOrganization(formData: FormData) {
+  // In demo mode, just route the user into the seeded workspace.
+  if (isDemoMode()) {
+    redirect("/app");
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

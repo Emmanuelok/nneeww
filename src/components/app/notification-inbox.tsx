@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { sendNotificationAction } from "@/lib/notifications/actions";
 import {
   Card,
   CardContent,
@@ -229,6 +230,7 @@ function CandidatePanel({
     DEFAULT_TEMPLATE(candidate.name, candidate.postingTitle, "we have decided to move forward with another candidate")
   );
   const [justSent, setJustSent] = useState(false);
+  const [isSending, startSending] = useTransition();
 
   function handleDecisionChange(next: "made" | "not_made" | "no_hire") {
     setDecision(next);
@@ -242,8 +244,18 @@ function CandidatePanel({
   }
 
   function send() {
+    // Optimistic UI: mark sent locally, then persist server-side.
     onSent();
     setJustSent(true);
+    startSending(async () => {
+      await sendNotificationAction({
+        candidateId: candidate.id,
+        postingId: candidate.postingId,
+        decision,
+        method,
+        body,
+      });
+    });
   }
 
   return (
@@ -361,9 +373,9 @@ function CandidatePanel({
             <FileText className="h-3 w-3" />
             ESA s. 8.5 · 45-day candidate notification
           </div>
-          <Button onClick={send} disabled={isSent}>
+          <Button onClick={send} disabled={isSent || isSending}>
             <Send className="h-4 w-4" />
-            {isSent ? "Notification sent" : "Send notification"}
+            {isSent ? "Notification sent" : isSending ? "Sending…" : "Send notification"}
           </Button>
         </div>
       </CardContent>

@@ -11,13 +11,21 @@ import { Badge } from "@/components/ui/badge";
 import { Download, ExternalLink, ShieldCheck, FileBadge } from "lucide-react";
 import Link from "next/link";
 import { JURISDICTIONS } from "@/lib/compliance/jurisdictions";
-import { demoPostings, dashboardStats } from "@/lib/demo/data";
+import { getActiveOrg } from "@/lib/auth/context";
+import { listPostings } from "@/lib/repositories/postings";
+import { getDashboardStats } from "@/lib/repositories/stats";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Compliance" };
 
-export default function CompliancePage() {
-  const stats = dashboardStats();
-  const failingPostings = demoPostings.filter((p) => p.failedChecks > 0 && p.status === "live");
+export default async function CompliancePage() {
+  const org = await getActiveOrg();
+  if (!org) redirect("/onboarding");
+  const [stats, postings] = await Promise.all([
+    getDashboardStats(org.id),
+    listPostings(org.id),
+  ]);
+  const failingPostings = postings.filter((p) => p.failedChecks > 0 && p.status === "live");
 
   return (
     <AppShell
@@ -121,7 +129,7 @@ export default function CompliancePage() {
                         {p.title}
                       </Link>
                       <div className="text-xs text-muted-foreground">
-                        {p.location} · posted {p.postedAt.toLocaleDateString("en-CA")}
+                        {p.location} · posted {p.postedAt?.toLocaleDateString("en-CA") ?? "—"}
                       </div>
                     </div>
                     <Badge variant={p.failedChecks >= 2 ? "danger" : "warning"}>
