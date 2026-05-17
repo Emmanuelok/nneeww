@@ -15,6 +15,7 @@ import { and, eq, ilike } from "drizzle-orm";
 import { isDemoMode } from "@/lib/mode";
 import { getActiveOrg } from "@/lib/auth/context";
 import { runComplianceChecks } from "@/lib/compliance/checker";
+import { provinceToJurisdiction } from "@/lib/compliance/province";
 import { randomUUID } from "crypto";
 
 export type CommitResult = {
@@ -59,6 +60,7 @@ export async function commitPostingsImport(rows: PostingRow[]): Promise<CommitRe
 
   const org = await getActiveOrg();
   if (!org) redirect("/login");
+  const jurisdiction = provinceToJurisdiction(org.province);
 
   let imported = 0;
   let skipped = 0;
@@ -78,7 +80,7 @@ export async function commitPostingsImport(rows: PostingRow[]): Promise<CommitRe
     const report = runComplianceChecks({
       title: row.title,
       rawText: row.rawText,
-      jurisdiction: "ca_on",
+      jurisdiction,
       vacancyStatus: row.vacancyStatus ?? "not_disclosed",
       aiUsed: row.aiUsed ?? true,
       compensationMin: row.compensationMin ?? null,
@@ -98,7 +100,7 @@ export async function commitPostingsImport(rows: PostingRow[]): Promise<CommitRe
         compensationMin: row.compensationMin ?? null,
         compensationMax: row.compensationMax ?? null,
         compensationCurrency: "CAD",
-        jurisdiction: "ca_on",
+        jurisdiction,
         postedAt,
         status: "live",
         retentionUntil,

@@ -56,6 +56,7 @@ export default async function PostingsPage() {
               <tr>
                 <th className="px-6 py-3 text-left font-medium">Title</th>
                 <th className="px-4 py-3 text-left font-medium">Location</th>
+                <th className="px-4 py-3 text-left font-medium">Jurisdiction</th>
                 <th className="px-4 py-3 text-left font-medium">Pay range</th>
                 <th className="px-4 py-3 text-left font-medium">Compliance</th>
                 <th className="px-4 py-3 text-right font-medium">Posted</th>
@@ -71,6 +72,9 @@ export default async function PostingsPage() {
                     <div className="text-xs text-muted-foreground">{p.department}</div>
                   </td>
                   <td className="px-4 py-4 text-muted-foreground">{p.location}</td>
+                  <td className="px-4 py-4">
+                    <JurisdictionBadge code={p.jurisdiction} />
+                  </td>
                   <td className="px-4 py-4 text-muted-foreground">
                     {p.compensationMin && p.compensationMax
                       ? `$${(p.compensationMin / 1000).toFixed(0)}k–$${(p.compensationMax / 1000).toFixed(0)}k`
@@ -123,6 +127,18 @@ export default async function PostingsPage() {
       )}
     </AppShell>
   );
+}
+
+const JURISDICTION_LABEL: Record<string, string> = {
+  ca_on: "Ontario",
+  ca_bc: "BC",
+  ca_fed: "Federal",
+  ca_ab: "Alberta",
+  ca_qc: "Quebec",
+};
+
+function JurisdictionBadge({ code }: { code: string }) {
+  return <Badge variant="muted">{JURISDICTION_LABEL[code] ?? code}</Badge>;
 }
 
 function ScoreBadge({ score, failedChecks }: { score: number; failedChecks: number }) {

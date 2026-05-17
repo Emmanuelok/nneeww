@@ -142,6 +142,48 @@ are reviewed manually by our hiring team.`,
     complianceScore: 100,
     failedChecks: 0,
   },
+  {
+    id: "p_006",
+    title: "Plant Operations Lead",
+    department: "Operations",
+    location: "Burnaby, BC",
+    postingUrl: "https://careers.acme.ca/postings/plant-ops-lead-bc",
+    jurisdiction: "ca_bc",
+    vacancyStatus: "not_disclosed",
+    aiUsed: true,
+    compensationMin: 105_000,
+    compensationMax: 145_000,
+    compensationCurrency: "CAD",
+    rawText: `Acme is hiring a Plant Operations Lead at our Burnaby facility.
+Expected total compensation: $105,000–$145,000 CAD.
+Reporting to the VP Operations, you'll oversee shift scheduling, safety, and continuous-improvement initiatives.`,
+    postedAt: addDays(-6),
+    status: "live",
+    retentionUntil: addDays(-6 + 365 * 3),
+    complianceScore: 100,
+    failedChecks: 0,
+  },
+  {
+    id: "p_007",
+    title: "Customer Service Representative (Federal)",
+    department: "Member Services",
+    location: "Toronto, ON · Federally regulated",
+    postingUrl: "https://careers.acme.ca/postings/csr-federal",
+    jurisdiction: "ca_fed",
+    vacancyStatus: "existing_vacancy",
+    aiUsed: false,
+    compensationMin: 52_000,
+    compensationMax: 62_000,
+    compensationCurrency: "CAD",
+    rawText: `Federally regulated employer hiring a Customer Service Representative.
+Compensation range: $52,000–$62,000 CAD.
+Must be a Canadian citizen.`,
+    postedAt: addDays(-11),
+    status: "live",
+    retentionUntil: addDays(-11 + 365 * 3),
+    complianceScore: 0,
+    failedChecks: 1,
+  },
 ];
 
 export type DemoCandidate = {

@@ -33,6 +33,7 @@ import {
   type ComplianceReport,
   type PostingInput,
 } from "@/lib/compliance/checker";
+import type { JurisdictionRules, JurisdictionCode } from "@/lib/compliance/jurisdictions";
 
 const SAMPLE_TEXT = `Acme Manufacturing is hiring a Senior Accountant for our Toronto finance team.
 This posting is for an existing vacancy. Expected compensation: $95,000–$125,000 CAD.
@@ -40,7 +41,13 @@ This posting is for an existing vacancy. Expected compensation: $95,000–$125,0
 Responsibilities: month-end close, audit support, IFRS reporting.
 Requirements: CPA designation, 5+ years of Canadian experience preferred.`;
 
-export function PostingWizard() {
+export function PostingWizard({
+  jurisdictions,
+  defaultJurisdiction,
+}: {
+  jurisdictions: JurisdictionRules[];
+  defaultJurisdiction: JurisdictionCode;
+}) {
   const [title, setTitle] = useState("");
   const [rawText, setRawText] = useState("");
   const [postingUrl, setPostingUrl] = useState("");
@@ -48,6 +55,7 @@ export function PostingWizard() {
   const [aiUsed, setAiUsed] = useState(true);
   const [compensationMin, setCompensationMin] = useState<string>("");
   const [compensationMax, setCompensationMax] = useState<string>("");
+  const [jurisdiction, setJurisdiction] = useState<JurisdictionCode>(defaultJurisdiction);
   const [hasChecked, setHasChecked] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
@@ -61,6 +69,7 @@ export function PostingWizard() {
         aiUsed,
         compensationMin: compensationMin ? parseInt(compensationMin, 10) : null,
         compensationMax: compensationMax ? parseInt(compensationMax, 10) : null,
+        jurisdiction,
       });
     });
   }
@@ -70,14 +79,14 @@ export function PostingWizard() {
     return runComplianceChecks({
       title: title.trim() || "Untitled posting",
       rawText,
-      jurisdiction: "ca_on",
+      jurisdiction,
       vacancyStatus,
       aiUsed,
       compensationMin: compensationMin ? parseInt(compensationMin, 10) : null,
       compensationMax: compensationMax ? parseInt(compensationMax, 10) : null,
       compensationCurrency: "CAD",
     });
-  }, [hasChecked, title, rawText, vacancyStatus, aiUsed, compensationMin, compensationMax]);
+  }, [hasChecked, title, rawText, jurisdiction, vacancyStatus, aiUsed, compensationMin, compensationMax]);
 
   function loadSample() {
     setTitle("Senior Accountant");
@@ -86,6 +95,7 @@ export function PostingWizard() {
     setAiUsed(true);
     setCompensationMin("95000");
     setCompensationMax("125000");
+    setJurisdiction("ca_on");
     setHasChecked(false);
   }
 
@@ -138,6 +148,39 @@ export function PostingWizard() {
               className="font-mono text-[13px] leading-relaxed"
             />
           </div>
+
+          <Separator />
+
+          <fieldset className="space-y-3">
+            <Label>Jurisdiction</Label>
+            <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+              {jurisdictions.map((j) => (
+                <label
+                  key={j.code}
+                  className={cn(
+                    "flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 transition-colors",
+                    jurisdiction === j.code
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-foreground/30"
+                  )}
+                >
+                  <span>{j.name}</span>
+                  <input
+                    type="radio"
+                    name="jurisdiction"
+                    value={j.code}
+                    checked={jurisdiction === j.code}
+                    onChange={() => setJurisdiction(j.code)}
+                    className="sr-only"
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The compliance checks below dispatch on this jurisdiction. Different rules apply in
+              each — pay-range cap, AI disclosure, prohibited language.
+            </p>
+          </fieldset>
 
           <Separator />
 
@@ -237,9 +280,6 @@ export function PostingWizard() {
             Run compliance check
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Jurisdiction: Ontario (Employment Standards Act). Ontario is fully active in v1; BC, Alberta, federal, and Quebec ship through 2026.
-          </p>
         </CardContent>
       </Card>
 

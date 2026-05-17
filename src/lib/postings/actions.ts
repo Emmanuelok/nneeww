@@ -15,6 +15,8 @@ import {
   runComplianceChecks,
   type PostingInput,
 } from "@/lib/compliance/checker";
+import type { JurisdictionCode } from "@/lib/compliance/jurisdictions";
+import { provinceToJurisdiction } from "@/lib/compliance/province";
 import { users } from "@/lib/db/schema";
 
 export type SavePostingInput = {
@@ -25,6 +27,7 @@ export type SavePostingInput = {
   aiUsed: boolean;
   compensationMin: number | null;
   compensationMax: number | null;
+  jurisdiction?: JurisdictionCode;
 };
 
 /**
@@ -52,10 +55,12 @@ export async function savePostingAction(input: SavePostingInput) {
     ? await db.select().from(users).where(eq(users.supabaseUid, supabaseUid)).limit(1)
     : [];
 
+  const jurisdiction: JurisdictionCode = input.jurisdiction ?? provinceToJurisdiction(org.province);
+
   const report = runComplianceChecks({
     title: input.title,
     rawText: input.rawText,
-    jurisdiction: "ca_on",
+    jurisdiction,
     vacancyStatus: input.vacancyStatus,
     aiUsed: input.aiUsed,
     compensationMin: input.compensationMin,
@@ -79,7 +84,7 @@ export async function savePostingAction(input: SavePostingInput) {
       compensationMin: input.compensationMin,
       compensationMax: input.compensationMax,
       compensationCurrency: "CAD",
-      jurisdiction: "ca_on",
+      jurisdiction,
       postedAt: now,
       status: "live",
       retentionUntil,
