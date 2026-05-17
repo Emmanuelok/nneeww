@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, Upload } from "lucide-react";
 import { getActiveOrg } from "@/lib/auth/context";
 import { listPostings } from "@/lib/repositories/postings";
 import { redirect } from "next/navigation";
@@ -29,11 +29,18 @@ export default async function PostingsPage() {
       pageTitle="Postings"
       pageDescription="Run each posting through the compliance checker. Live items appear in your retention vault when taken down."
       actions={
-        <Button asChild>
-          <Link href="/app/postings/new">
-            <Plus className="h-4 w-4" /> New posting check
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/app/postings/import">
+              <Upload className="h-4 w-4" /> Import CSV
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/app/postings/new">
+              <Plus className="h-4 w-4" /> New posting check
+            </Link>
+          </Button>
+        </div>
       }
     >
       <Card>

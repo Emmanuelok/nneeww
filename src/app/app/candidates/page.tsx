@@ -27,8 +27,10 @@ export default async function CandidatesPage() {
       pageDescription="Every interviewed candidate, with their 45-day notification deadline."
       actions={
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Upload className="h-4 w-4" /> Import CSV
+          <Button asChild variant="outline">
+            <Link href="/app/candidates/import">
+              <Upload className="h-4 w-4" /> Import CSV
+            </Link>
           </Button>
           <Button>
             <Plus className="h-4 w-4" /> Log interview
