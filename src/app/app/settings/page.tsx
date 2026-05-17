@@ -19,9 +19,10 @@ import { db } from "@/lib/db";
 import { organizations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { isDemoMode } from "@/lib/mode";
-import { ExternalLink, Mail, Check, CreditCard, AlertCircle } from "lucide-react";
+import { ExternalLink, Mail, Check, CreditCard, AlertCircle, FileBadge } from "lucide-react";
 import { formatCAD, cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export const metadata = { title: "Settings" };
 
@@ -212,6 +213,22 @@ export default async function SettingsPage({
               <Mail className="h-4 w-4" /> Send invite
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Audit log</CardTitle>
+          <CardDescription>
+            Every state-changing action on this workspace — postings, notifications, imports, reports, billing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <Link href="/app/settings/audit">
+              <FileBadge className="h-4 w-4" /> Open audit log
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 
