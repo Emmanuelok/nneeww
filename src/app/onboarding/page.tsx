@@ -8,10 +8,10 @@ import { Leaf } from "lucide-react";
 
 const PROVINCES = [
   { value: "ON", label: "Ontario", supported: true },
-  { value: "BC", label: "British Columbia", supported: false },
+  { value: "BC", label: "British Columbia", supported: true },
+  { value: "FED", label: "Federally regulated", supported: true },
   { value: "AB", label: "Alberta", supported: false },
   { value: "QC", label: "Quebec", supported: false },
-  { value: "FED", label: "Federally regulated", supported: false },
   { value: "OTHER", label: "Other / multiple", supported: false },
 ];
 
@@ -77,7 +77,7 @@ export default function OnboardingPage() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Only Ontario is fully active in v1. Other jurisdictions ship through 2026.
+                    Ontario, British Columbia, and federally regulated employers are fully active. Alberta and Quebec ship through 2026.
                   </p>
                 </fieldset>
 

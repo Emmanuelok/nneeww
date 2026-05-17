@@ -80,34 +80,53 @@ export default async function CompliancePage() {
         <CardContent className="p-0">
           <ul className="divide-y divide-border/60">
             {Object.values(JURISDICTIONS).map((j) => (
-              <li key={j.code} className="flex items-center justify-between gap-3 px-6 py-3.5">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{j.name}</span>
-                    {j.active ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="muted">Coming soon</Badge>
+              <li key={j.code} className="px-6 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{j.name}</span>
+                      {j.active ? (
+                        <Badge variant="success">Active</Badge>
+                      ) : (
+                        <Badge variant="muted">Coming soon</Badge>
+                      )}
+                    </div>
+                    {j.tagline && (
+                      <p className="mt-0.5 text-sm text-muted-foreground">{j.tagline}</p>
                     )}
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Effective {new Date(j.effectiveDate).toLocaleDateString("en-CA")}
+                      {j.rules.payTransparency.required && " · pay range required"}
+                      {j.rules.aiDisclosure.required && " · AI disclosure"}
+                      {j.rules.candidateNotificationDays
+                        ? ` · ${j.rules.candidateNotificationDays}-day notification`
+                        : ""}
+                      {j.rules.recordRetentionYears
+                        ? ` · ${j.rules.recordRetentionYears}-yr retention`
+                        : ""}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Effective {new Date(j.effectiveDate).toLocaleDateString("en-CA")} ·{" "}
-                    {j.rules.candidateNotificationDays
-                      ? `${j.rules.candidateNotificationDays}-day notification · `
-                      : ""}
-                    {j.rules.recordRetentionYears
-                      ? `${j.rules.recordRetentionYears}-yr retention`
-                      : "no retention rule"}
-                  </div>
+                  <a
+                    href={j.statuteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Statute <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
-                <a
-                  href={j.statuteUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Statute <ExternalLink className="h-3 w-3" />
-                </a>
+                {j.notes && j.notes.length > 0 && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
+                      Regulatory notes
+                    </summary>
+                    <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground">
+                      {j.notes.map((n, i) => (
+                        <li key={i} className="pl-4 -indent-2">· {n}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </li>
             ))}
           </ul>

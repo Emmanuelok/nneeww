@@ -20,6 +20,15 @@ export type JurisdictionRules = {
   effectiveDate: string; // ISO
   active: boolean; // whether the product enforces this jurisdiction today
   statuteUrl: string;
+  /**
+   * One-line tagline for the marketing + compliance page.
+   */
+  tagline?: string;
+  /**
+   * Non-checkable regulatory context shown on the compliance page and
+   * methodology pages. Each entry should reference a statute section.
+   */
+  notes?: string[];
   rules: {
     employeeThreshold: number | null;
     payTransparency: {
@@ -43,6 +52,13 @@ export const JURISDICTIONS: Record<JurisdictionCode, JurisdictionRules> = {
     effectiveDate: "2026-01-01",
     active: true,
     statuteUrl: "https://www.ontario.ca/laws/statute/00e41",
+    tagline:
+      "Pay transparency, AI disclosure, vacancy disclosure, 45-day candidate notification, 3-year retention.",
+    notes: [
+      "Working for Workers Four / Five / Seven Acts amended the ESA effective Jan 1, 2026.",
+      "Maximum administrative monetary penalties were doubled in the 2026 amendments.",
+      "Enforcement typically begins with a candidate complaint to the Ministry of Labour.",
+    ],
     rules: {
       employeeThreshold: 25,
       payTransparency: {
@@ -66,9 +82,17 @@ export const JURISDICTIONS: Record<JurisdictionCode, JurisdictionRules> = {
     code: "ca_bc",
     name: "British Columbia",
     effectiveDate: "2023-11-01",
-    active: false,
+    active: true,
     statuteUrl:
       "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/23018",
+    tagline:
+      "Pay transparency required on all public postings — no employee threshold, no spread cap.",
+    notes: [
+      "BC Pay Transparency Act applies to all employers in BC, with no minimum-employee threshold.",
+      "Section 2: postings must include expected pay or pay range. Vague terms like 'competitive' do not satisfy the requirement.",
+      "No statutory maximum on range spread (unlike Ontario's $50,000 cap) — but unreasonably wide ranges may attract scrutiny.",
+      "Annual pay-transparency reporting obligations begin at the 1,000-employee threshold (Nov 2024), then 300 (Nov 2025), then 50 (Nov 2026).",
+    ],
     rules: {
       employeeThreshold: null,
       payTransparency: {
@@ -119,17 +143,31 @@ export const JURISDICTIONS: Record<JurisdictionCode, JurisdictionRules> = {
   ca_fed: {
     code: "ca_fed",
     name: "Canada (federal)",
-    effectiveDate: "2026-01-01",
-    active: false,
+    effectiveDate: "2021-08-31",
+    active: true,
     statuteUrl: "https://laws-lois.justice.gc.ca/eng/acts/l-2/",
+    tagline:
+      "Federally regulated employers: anti-discrimination posting scan + record retention. Pay-posting transparency pending federally.",
+    notes: [
+      "Applies to federally regulated workplaces — banks, telecoms, inter-provincial transport, federal Crown corporations.",
+      "Canada Labour Code Part III requires employment records be kept for 36 months.",
+      "Federal Pay Equity Act (in force Aug 2021) requires employers with 10+ employees to establish a pay equity plan; this is separate from posting-side transparency.",
+      "Federal posting-transparency rules analogous to Ontario's are under consultation but not yet in force; ClearPost surfaces a warning when a posting omits expected pay so federally regulated employers can stay ahead.",
+      "Section 11 of the Canadian Human Rights Act and the Employment Equity Act both bear on prohibited-information requests in postings.",
+    ],
     rules: {
       employeeThreshold: null,
-      payTransparency: { required: true, maxRangeSpread: null, upperBoundExemption: null, currency: "CAD" },
+      payTransparency: { required: false, maxRangeSpread: null, upperBoundExemption: null, currency: "CAD" },
       aiDisclosure: { required: false },
       vacancyDisclosure: { required: false },
-      prohibitedClauses: [],
+      prohibitedClauses: [
+        "canadian citizen required",
+        "must be a canadian citizen",
+        "canadian citizenship required",
+        "citizens only",
+      ],
       candidateNotificationDays: null,
-      recordRetentionYears: null,
+      recordRetentionYears: 3,
     },
   },
   us_ny: {
