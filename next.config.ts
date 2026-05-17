@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   experimental: {
     typedRoutes: false,
   },
+  // pdfkit ships built-in font .afm files that webpack tree-shakes away when
+  // bundling the route. Marking it as a server-external package keeps the
+  // module loaded from node_modules at runtime, so the fonts resolve.
+  serverExternalPackages: ["pdfkit"],
 };
 
 export default withNextIntl(nextConfig);

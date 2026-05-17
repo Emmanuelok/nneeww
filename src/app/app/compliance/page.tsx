@@ -33,8 +33,10 @@ export default async function CompliancePage() {
       pageTitle="Compliance"
       pageDescription="Per-jurisdiction status across all postings, with statute citations and a one-click audit report."
       actions={
-        <Button>
-          <Download className="h-4 w-4" /> Generate report (PDF + ZIP)
+        <Button asChild>
+          <a href="/api/reports/compliance" download>
+            <Download className="h-4 w-4" /> Generate report (PDF + ZIP)
+          </a>
         </Button>
       }
     >
